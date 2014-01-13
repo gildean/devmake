@@ -1,0 +1,10 @@
+{
+  "name": "devmake",
+  "version": "0.0.1",
+  "description": "watch a dir for changes and execute a command",
+  "main": "devmake",
+  "preferGlobal": "true",
+  "bin": { "devmake": "./devmake" },
+  "author": "Olli Kankare",
+  "license": "BSD"
+}

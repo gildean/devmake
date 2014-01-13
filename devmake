@@ -1,0 +1,68 @@
+#!/usr/bin/env node
+
+var fs = require('fs');
+var util = require('util');
+var path = require('path');
+var exec = require('child_process').exec;
+var switches = process.argv.splice(2).join(' ').replace('-', '').split(' -');
+var command = 'make';
+var fileLocation = path.resolve('./');
+var extensions = '\'\.js$|\.html$|\.css$|\.less$|\.coffee$|\.mustache$\'';
+getSwitches(switches);
+var find = 'find ' + fileLocation + ' | grep -E ' + extensions;
+
+function getSwitches(arr) {
+    arr.forEach(function (item) {
+        var match = item.match('^c |^d |^e |^h');
+        if (match) {
+            getCmdStr(item, match[0]);
+        }
+    });
+}
+
+function getCmdStr(str, ch) {
+    str = str.substring(2).trim();
+    switch (ch.substring(0,1)) {
+        case 'c':
+            command = str;
+            break;
+        case 'd':
+            fileLocation = path.resolve(str);
+            break;
+        case 'e':
+            extensions = '\'' + str.split(' ').map(function (item) { return '\.' + item + '$'; }).join('|') + '\'';
+            break;
+        default:
+            console.log('filewatcher - ok 2014');
+            console.log('\r\nusage: devmake [options] e.g.: devmake -d ./static -c make web-client -e less coffee mustache');
+            console.log('-d /some/directory (default: ./)');
+            console.log('-c some command (default: make)');
+            console.log('-e list of extensions (default: js css html less coffee mustache)');
+            console.log('-h help');
+            console.log('');
+            process.exit(0);
+    }
+}
+
+exec(find, function (err, stdout, stderr) {
+    var files = stdout.split('\n');
+    var to;
+    util.log('watching files for changes');
+    files.forEach(function (file) {
+        if (file) {
+            fs.watch(file, function (event, filename) {
+                if (to) {
+                    clearTimeout(to);
+                    to = null;
+                }
+                to = setTimeout(function () {
+                    exec(command, function (err, stdout, stderr) {
+                        if (err) throw err;
+                        util.log('File(s) changed, executing command ' + command);
+                        console.log(stdout, stderr);
+                    });
+                }, 10);
+            });
+        }
+    })
+});
