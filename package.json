@@ -6,5 +6,5 @@
   "preferGlobal": "true",
   "bin": { "devmake": "./devmake" },
   "author": "Olli Kankare",
-  "license": "BSD"
+  "license": "MIT"
 }
