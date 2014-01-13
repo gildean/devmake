@@ -44,25 +44,30 @@ function getCmdStr(str, ch) {
     }
 }
 
+var to;
+function setWatcher(file) {
+    fs.watch(file, { persistent: true }, function (event, filename) {
+        if (to) {
+            clearTimeout(to);
+            to = null;
+        }
+        to = setTimeout(function () {
+            console.log('event', filename);
+            exec(command, function (err, stdout, stderr) {
+                if (err) throw err;
+                util.log('File(s) changed, executing command ' + command);
+                console.log(stdout, stderr);
+            });
+        }, 10);
+    });
+}
+
 exec(find, function (err, stdout, stderr) {
     var files = stdout.split('\n');
-    var to;
     util.log('watching files for changes');
     files.forEach(function (file) {
         if (file) {
-            fs.watch(file, function (event, filename) {
-                if (to) {
-                    clearTimeout(to);
-                    to = null;
-                }
-                to = setTimeout(function () {
-                    exec(command, function (err, stdout, stderr) {
-                        if (err) throw err;
-                        util.log('File(s) changed, executing command ' + command);
-                        console.log(stdout, stderr);
-                    });
-                }, 10);
-            });
+            setWatcher(file);
         }
     })
 });
