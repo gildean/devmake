@@ -5,6 +5,10 @@
   "main": "devmake",
   "preferGlobal": "true",
   "bin": { "devmake": "./devmake" },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/gildean/devmake.git"
+  },
   "author": "Olli Kankare",
   "license": "MIT"
 }
