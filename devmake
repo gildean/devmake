@@ -8,13 +8,20 @@ var watch = require('watch');
 var switches = process.argv.splice(2).join(' ').replace('-', '').split(' -');
 var command = 'make';
 var fileLocation = path.resolve('./');
-var extensions = '\'\.js$|\.html$|\.css$|\.less$|\.coffee$|\.mustache$\'';
+var extensions = /\.js$|\.html$|\.css$|\.less$|\.coffee$|\.mustache$/;
+var series = false;
+var options = {
+    filter: function filterFn(item) {
+        return extensions.test(item);
+    }
+};
+var queue = 0;
+var to;
 getSwitches(switches);
-var find = 'find ' + fileLocation + ' | grep -E ' + extensions;
 
 function getSwitches(arr) {
     arr.forEach(function (item) {
-        var match = item.match('^c |^d |^e |^h');
+        var match = item.match('^c |^d |^e |^h|^f');
         if (match) {
             getCmdStr(item, match[0]);
         }
@@ -30,33 +37,54 @@ function getCmdStr(str, ch) {
         case 'd':
             fileLocation = path.resolve(str);
             break;
+        case 'f':
+            series = true;
+            break;
         case 'e':
-            extensions = '\'' + str.split(' ').map(function (item) { return '\.' + item + '$'; }).join('|') + '\'';
+            extensions = RegExp(str.split(' ').map(function (item) { return '\.' + item + '$'; }).join('|'));
             break;
         default:
-            console.log('filewatcher - ok 2014');
-            console.log('\r\nusage: devmake [options] e.g.: devmake -d ./static -c make web-client -e less coffee mustache');
-            console.log('-d /some/directory (default: ./)');
-            console.log('-c some command (default: make)');
-            console.log('-e list of extensions (default: js css html less coffee mustache)');
-            console.log('-h help');
+            console.log('\r\n devmake - ok 2014');
+            console.log('\r\n usage: devmake [options]\r\n e.g. devmake -d ./static -c make web-client -e less coffee mustache\r\n');
+            console.log(' options:');
+            console.log('   -d /some/directory -- (default: ./)');
+            console.log('   -c some command -- (default: make)');
+            console.log('   -e list of extensions -- (default: js css html less coffee mustache)');
+            console.log('   -f -- force commands to wait until previous execution is complete');
+            console.log('   -h -- help');
             console.log('');
             process.exit(0);
     }
 }
 
-var to;
-function setWatcher() {
-    to = setTimeout(function () {
-        exec(command, function (err, stdout, stderr) {
-            if (err) throw err;
-            util.log('File(s) changed, executing command ' + command);
-            console.log(stdout, stderr);
-        });
-    }, 10);
+function execCommand() {
+    exec(command, function (err, stdout, stderr) {
+        if (err) throw err;
+        util.log('File(s) changed, executing command ' + command);
+        console.log(stdout, stderr);
+        if (queue) {
+            queue -= 1;
+            if (queue) execCommand();
+        }
+    });
 }
 
-watch.createMonitor(fileLocation, function (monitor) {
+function setWatcher() {
+    if (!series) {
+        if (to) {
+            clearTimeout(to);
+            to = null;
+        }
+        to = setTimeout(execCommand, 10);
+        return;
+    }
+    if (!queue) {
+        setTimeout(execCommand, 10);
+    }
+    queue += 1;
+}
+
+watch.createMonitor(fileLocation, options, function (monitor) {
     monitor.on('created', setWatcher);
     monitor.on('changed', setWatcher);
     monitor.on('removed', setWatcher);
