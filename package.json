@@ -4,11 +4,16 @@
   "description": "watch a dir for changes and execute a command",
   "main": "devmake",
   "preferGlobal": "true",
-  "bin": { "devmake": "./devmake" },
+  "bin": {
+    "devmake": "./devmake"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/gildean/devmake.git"
   },
   "author": "Olli Kankare",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "watch": "~0.8.0"
+  }
 }

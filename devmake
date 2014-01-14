@@ -4,6 +4,7 @@ var fs = require('fs');
 var util = require('util');
 var path = require('path');
 var exec = require('child_process').exec;
+var watch = require('watch');
 var switches = process.argv.splice(2).join(' ').replace('-', '').split(' -');
 var command = 'make';
 var fileLocation = path.resolve('./');
@@ -45,29 +46,20 @@ function getCmdStr(str, ch) {
 }
 
 var to;
-function setWatcher(file) {
-    fs.watch(file, { persistent: true }, function (event, filename) {
-        if (to) {
-            clearTimeout(to);
-            to = null;
-        }
-        to = setTimeout(function () {
-            console.log('event', filename);
-            exec(command, function (err, stdout, stderr) {
-                if (err) throw err;
-                util.log('File(s) changed, executing command ' + command);
-                console.log(stdout, stderr);
-            });
-        }, 10);
-    });
+function setWatcher() {
+    to = setTimeout(function () {
+        exec(command, function (err, stdout, stderr) {
+            if (err) throw err;
+            util.log('File(s) changed, executing command ' + command);
+            console.log(stdout, stderr);
+        });
+    }, 10);
 }
 
-exec(find, function (err, stdout, stderr) {
-    var files = stdout.split('\n');
-    util.log('watching files for changes');
-    files.forEach(function (file) {
-        if (file) {
-            setWatcher(file);
-        }
-    })
+watch.createMonitor(fileLocation, function (monitor) {
+    monitor.on('created', setWatcher);
+    monitor.on('changed', setWatcher);
+    monitor.on('removed', setWatcher);
 });
+
+util.log('watching files for changes at ' + fileLocation);
