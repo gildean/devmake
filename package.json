@@ -1,6 +1,6 @@
 {
   "name": "devmake",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "watch a dir for changes and execute a command",
   "main": "devmake",
   "preferGlobal": "true",
