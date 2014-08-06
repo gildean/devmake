@@ -58,9 +58,9 @@ function getCmdStr(str, ch) {
 }
 
 function execCommand() {
+    util.log('File(s) changed, executing command ' + command);
     exec(command, function (err, stdout, stderr) {
         if (err) throw err;
-        util.log('File(s) changed, executing command ' + command);
         console.log(stdout, stderr);
         if (queue) {
             queue -= 1;
